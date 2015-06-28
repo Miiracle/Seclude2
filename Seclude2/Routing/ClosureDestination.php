@@ -2,11 +2,14 @@
 
 namespace Seclude2\Routing;
 
+use \Closure;
+
 /**
  * Destination that, upon run, executes a
  * function with the given arguments.
  */
-class ClosureDestination implements Destination {
+class ClosureDestination implements Destination
+{
     
     /**
      * The function to be executed upon Run
@@ -19,11 +22,13 @@ class ClosureDestination implements Destination {
      *
      * @param $destination Closure The function
      */
-    public function __construct (Closure $destination) {
+    public function __construct (Closure $destination)
+    {
         $this->destination = $destination;
     }
     
-    public function run (array $parameters) {
+    public function run (array $parameters)
+    {
         call_user_func_array ($this->destination, $parameters);
     }
     

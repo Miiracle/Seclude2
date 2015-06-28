@@ -15,7 +15,7 @@ class Request {
     }
     
     public static function fromGlobals () {
-        return new Request ($_SERVER['REQUEST_METHOD'], $_SERVER ['PHP_SELF'], isset ($_SERVER['HTTPS']));
+        return new Request ($_SERVER['REQUEST_METHOD'], self::detectRequestPath($_SERVER ['REQUEST_URI'], $_SERVER ['SCRIPT_NAME']), isset ($_SERVER['HTTPS']));
     }
     
     public function getMethod () {
@@ -28,6 +28,11 @@ class Request {
     
     public function isSecure () {
         return $this->secure;
+    }
+    
+    public static function detectRequestPath ($requestURI, $scriptName) {
+        $pos = strpos ($_SERVER ['REQUEST_URI'], '?');
+        return '/'. trim (substr ($pos !== FALSE ? substr ($_SERVER ['REQUEST_URI'], 0, $pos) : $_SERVER ['REQUEST_URI'], strlen (implode ('/', array_slice(explode('/', $_SERVER['SCRIPT_NAME']),0,-1)).'/')), '/');
     }
     
 }

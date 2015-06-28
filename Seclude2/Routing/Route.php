@@ -2,13 +2,15 @@
 
 namespace Seclude2\Routing;
 
-class Route {
+class Route
+{
 
     private $pattern;
     private $destination;
     private $match = array ();
     
-    public function __construct ($pattern, Destination $destination) {
+    public function __construct ($pattern, Destination $destination)
+    {
         $this->pattern = $pattern;
         $this->destination = $destination;
     }
@@ -16,12 +18,17 @@ class Route {
     /**
      * Check whether the given request matches the pattern
      */
-    public function matches ($request) {
-        return preg_match ($this->pattern, $request, $this->match);
+    public function matches ($request)
+    {
+        return preg_match ('@^'. $this->pattern .'$@', $request, $this->match);
     }
     
-    public function getDestination () {
-        return $this->destination->apply (
+    /**
+     * Runs the destination of this route
+     */
+    public function runDestination ()
+    {
+        return $this->destination->run ($this->match);
     }
     
 }
