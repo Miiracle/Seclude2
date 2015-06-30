@@ -2,8 +2,6 @@
 
 namespace Seclude2\Routing;
 
-use \Closure;
-
 /**
  * Destination that, upon run, executes a
  * function with the given arguments.
@@ -12,45 +10,42 @@ class DynamicDestination implements Destination
 {
     
     /**
-     * Useful default closure to explode on /
-     * 
-     * @var Closure
+     * @var callable Useful default callable to explode on /
      */
     public static $slashSplit;
-
+    
     /**
-     * The cpath of the class@method(args) of the destination
-     * @var string
+     * @var callable Useful default callable to not parse arguments at all
+     */
+    public static $noParse;
+    
+    /**
+     * @var string The cpath of the class@method(args) of the destination
      */
     private $cpath;
     
     /**
-     * The parameter number of the class
-     * @var int
+     * @var int The parameter number of the class
      */
     private $clazz;
     
     /**
-     * The parameter number of the method
-     * @var int
+     * @var int The parameter number of the method
      */
     private $method;
     
     /**
-     * The parameter number of the arguments
-     * @var int
+     * @var int The parameter number of the arguments
      */
     private $args;
     
     /**
-     * The function to extract the arguments from a string
+     * @var callable The function to extract the arguments from a string
      */
     private $argsExtractor;
     
     /**
-     * If true, static function calls are made to the class 
-     *
-     * @var bool
+     * @var bool If true, static function calls are made to the class 
      */
     private $staticMethods;
     
@@ -58,10 +53,10 @@ class DynamicDestination implements Destination
      * Initiates a dynamic destination
      *
      * @param $cpath The class>method-path in this format: Namespace\Class@method:args (can take parameters like {1})
-     * @param $argsExtractor Closure A function which generates an array out of a string of arguments. How, that's up to the implementation
+     * @param $argsExtractor callable A function which generates an array out of a string of arguments. How, that's up to the implementation
      * @param $staticMethods bool Whether to use static functions or not
      */
-    public function __construct ($cpath, Closure $argsExtractor, $staticMethods = false)
+    public function __construct ($cpath, callable $argsExtractor, $staticMethods = false)
     {
         // Convert the cpath into an array
         $parts = explode ('@', $cpath);
@@ -83,21 +78,21 @@ class DynamicDestination implements Destination
         // Make sure all the parameters and stuff are in the right place
         $className = preg_replace_callback ('/\{([0-9]+)\}/', function ($matches) use ($parameters) {
             if (!array_key_exists ($matches[1], $parameters))
-                throw new DestinationException ('The given parameter index '. $matches [1] .' for the class is not present');
+                throw new DestinationException ('The given parameter index '. $matches [1] .' for the class is not present. Check the route pattern.');
             
             return $parameters [$matches [1]];
         }, $this->clazz);
         
         $methodName = preg_replace_callback ('/\{([0-9]+)\}/', function ($matches) use ($parameters) {
             if (!array_key_exists ($matches[1], $parameters))
-                throw new DestinationException ('The given parameter index '. $matches [1] .' for the method is not present');
+                throw new DestinationException ('The given parameter index '. $matches [1] .' for the method is not present. Check the route pattern.');
             
             return $parameters [$matches [1]];
         }, $this->method);
         
         $args = preg_replace_callback ('/\{([0-9]+)\}/', function ($matches) use ($parameters) {
             if (!array_key_exists ($matches[1], $parameters))
-                throw new DestinationException ('The given parameter index '. $matches [1] .' for the arguments is not present');
+                throw new DestinationException ('The given parameter index '. $matches [1] .' for the arguments is not present. Check the route pattern.');
             
             return $parameters [$matches [1]];
         }, $this->args);
@@ -119,7 +114,7 @@ class DynamicDestination implements Destination
         // Get the arguments to pass to the function
         // First load $this->argsExtractor and then execute it. PHP is weird.
         $extractor = $this->argsExtractor;
-        $arguments = $extractor ($args);
+        $arguments = (array) $extractor ($args);
         
         // Call the class->method with $arguments
         call_user_func_array (array ($clazz, $methodName), $arguments);
@@ -128,3 +123,4 @@ class DynamicDestination implements Destination
 }
 
 DynamicDestination::$slashSplit = function ($args) { return explode ('/', $args); };
+DynamicDestination::$noParse = function () { return array (); };
